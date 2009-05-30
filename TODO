@@ -1,0 +1,11 @@
+TODO:
+-----
+
+- Implement a comment overlay
+  (code to extract the comment is already written, but not in a clean way)
+
+- Testing
+  (works for me with my images)
+
+- Enable some kind of configuration for enabling/disabling gamma for PFM files
+
