@@ -1,0 +1,32 @@
+1 Introduction:
+---------------
+
+  You need Xcode and Leopard (Quicklook was introduced in Leopard) to compile
+  the program.
+
+
+
+2 Compilation :
+---------------
+
+  You can either use the command line version by simply typing in
+
+  $ make
+
+  (without $) in the directory, or you can use XCode directly to open the
+  project and compile it yourself.
+
+
+
+3 Installation :
+----------------
+
+  The final program is build in the build/Relase directory. In order to use
+  the plugin, you have to copy it to a Quicklook location as, e.g.
+
+  ~/Library/QuickLook/
+
+  and restart the Finder (killall Finder in terminal, or logout/login).
+
+  Now, the plugin should work.
+
