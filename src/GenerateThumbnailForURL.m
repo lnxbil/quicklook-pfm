@@ -167,6 +167,9 @@ OSStatus GenerateThumbnailForURL(void *thisInterface, QLThumbnailRequestRef thum
     
     QLThumbnailRequestSetImage(thumbnail, newCGImage, NULL);
     
+    // Releasing image
+    CGImageRelease(newCGImage);
+    
     NSLog(@"Finished preview in %.3f sec", -[startDate timeIntervalSinceNow] );
     
     [reader release];
