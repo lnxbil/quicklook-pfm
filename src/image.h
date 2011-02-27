@@ -30,4 +30,6 @@
 // general case
 - (CGImageRef)load:(CFStringRef)filename;
 
+
+
 @end

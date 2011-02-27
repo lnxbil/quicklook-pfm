@@ -173,21 +173,13 @@
     memset((void*) comments, 0, sizeof(char)*80*clines);
     
     
-    
-    
-    
-    
-    
-    
-    
-    
     // Second Entry could be the size of the image an it could be a comment
     fgets (row, 80, inimage);
     while (row[0]=='#')
     {
         if (counter < clines)
         {
-            printf("Reading comment %d to pointer %d\n  %s",counter, counter*80, row );
+            printf("Reading comment %d to pointer %d\n  %s", (int) counter, (int) counter*80, row );
             strncpy(&comments[pos], row, strlen(row));
             pos += strlen(row);
             counter +=1;
@@ -204,55 +196,49 @@
     NSLog(@"We have: \"%@\"",str);
     
     
+	NSString* tmp = [NSString stringWithUTF8String: row];
+    NSArray *values = [tmp componentsSeparatedByString: @" "];
+	
+	cp = 0;
+    
+	// if only dimensions are in this line
+    if ([values count] == 2) {
+		  // Saving image dimensions
+		NSLog(@"We found %d parameters\n", [values count]);
+		sscanf (row, "%d %d", &nx, &ny);
+		printf("Reading Image with %dx%d\n",nx, ny);
+		if (ny == 0)
+		{
+			printf("Trying second line for dimensions in PFM file\n");
+			fgets (row, 80, inimage);
+			sscanf (row, "%d", &ny);
+			printf("Reading Image with %dx%d\n",nx, ny);
+		}
+    
+		// get color depth
+		fgets (row, 80, inimage);
     
     
+		// colors
+		sscanf (row, "%d", &cp);
     
     
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    // Saving image dimensions
-    sscanf (row, "%d %d", &nx, &ny);
-    printf("Reading Image with %dx%d\n",nx, ny);
-    if (ny == 0)
-    {
-        printf("Trying second line for dimensions in PFM file\n");
-        fgets (row, 80, inimage);
-        sscanf (row, "%d", &ny);
-        printf("Reading Image with %dx%d\n",nx, ny);
-    }
-    
-    // get color depth
-    fgets (row, 80, inimage);
-    
-    
-    // colors
-    cp = 0;
-    sscanf (row, "%d", &cp);
-    
-    
-    NSLog(@"Image has been read and has size %dx%dx%d\n",nx, ny, channels);
-    
+		NSLog(@"Image has been read and has size %dx%dx%d\n",nx, ny, channels);
+	} else {
+		NSLog(@"We found %d parameters\n", [values count]);
+		// Saving image dimensions
+		sscanf (row, "%d %d %d", &nx, &ny, &cp);
+		printf("Reading Image with %dx%d %d\n",nx, ny, cp);
+		if (ny == 0)
+		{
+			printf("Trying second line for dimensions in PFM file\n");
+			fgets (row, 80, inimage);
+			sscanf (row, "%d", &ny);
+			printf("Reading Image with %dx%d\n",nx, ny);
+		}
+		
+		NSLog(@"Image has been read and has size %dx%dx%d\n",nx, ny, channels);
+	}
     
     spp = channels;
     bps = 8;
@@ -361,8 +347,5 @@
     
     return NULL;
 }
-
-
-
 
 @end
