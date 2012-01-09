@@ -217,7 +217,7 @@
 	// if only dimensions are in this line
     if ([values count] == 2) {
 		  // Saving image dimensions
-		NSLog(@"We found %d parameters\n", [values count]);
+		NSLog(@"We found %u parameters\n", (unsigned int) [values count]);
 		sscanf (row, "%d %d", &nx, &ny);
 		printf("Reading Image with %dx%d\n",nx, ny);
 		if (ny == 0)
@@ -238,7 +238,7 @@
     
 		NSLog(@"Image has been read and has size %dx%dx%d\n",nx, ny, channels);
 	} else {
-		NSLog(@"We found %d parameters\n", [values count]);
+		NSLog(@"We found %u parameters\n", (unsigned int)[values count]);
 		// Saving image dimensions
 		sscanf (row, "%d %d %d", &nx, &ny, &cp);
 		printf("Reading Image with %dx%d %d\n",nx, ny, cp);
