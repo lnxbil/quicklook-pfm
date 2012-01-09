@@ -115,7 +115,7 @@ OSStatus GenerateThumbnailForURL(void *thisInterface, QLThumbnailRequestRef thum
     
     float max = 512;
     
-    NSLog(@"Got %dx%d for resizing with aspect %f",w,h, (float) w / (float) h);
+    NSLog(@"Got %ldx%ld for resizing with aspect %f",w,h, (float) w / (float) h);
     size_t resw = w;
     size_t resh = h;
     
@@ -148,7 +148,7 @@ OSStatus GenerateThumbnailForURL(void *thisInterface, QLThumbnailRequestRef thum
         if (resh == 0)
             resh = 1;
         
-        NSLog(@"Finally, we have %dx%d for resizing with aspect %f",resw, resh, resw / (float) resh);
+        NSLog(@"Finally, we have %ldx%ld for resizing with aspect %f",resw, resh, resw / (float) resh);
         
         
     }

@@ -60,7 +60,7 @@ OSStatus GeneratePreviewForURL( void *thisInterface,
     
     CGContextDrawImage(cgContext, rect, image);
     
-    NSLog(@"We have size %dx%d\n",width,height);
+    NSLog(@"We have size %ldx%ld\n",width,height);
     
 
     QLPreviewRequestFlushContext(preview, cgContext);

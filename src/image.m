@@ -92,7 +92,7 @@
 
     if (check != nx*ny*channels)
     {
-        NSLog(@"Unfortunately, we read %d instead of %d (%dx%dx%d) items", check, nx*ny*channels, nx, ny, channels);
+        NSLog(@"Unfortunately, we read %ld instead of %ud (%udx%udx%ud) items", check, nx*ny*channels, nx, ny, channels);
         return NULL;
     }
     
@@ -114,7 +114,7 @@
     for (unsigned int j=0; j < nx*ny*channels; j += nx*channels)
         for (unsigned int i=0; i < nx*channels; i += channels)
             for(unsigned int k=0; k < channels; k++)
-                if ( tmpf = tmp[j+i+k] > max)
+                if ( (tmpf = tmp[j+i+k]) > max)
                     max = tmpf;
 
     
@@ -281,7 +281,7 @@
     
     if (check != nx*ny*channels)
     {
-        NSLog(@"Unfortunately, we read %d instead of %d (%dx%dx%d) items", check, nx*ny*channels, nx, ny, channels);
+        NSLog(@"Unfortunately, we read %ld instead of %d (%dx%dx%d) items", check, nx*ny*channels, nx, ny, channels);
         return NULL;
     }
     
