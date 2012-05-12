@@ -19,11 +19,162 @@
  * 
  */
 
+// May 2012  Bugfixes by JulieSPorter (sheepdoll on github)
+
+// changed load: method to use a safe multi langage string encoding method.  This allows
+// for spaces in the path name to be correctly handled.
+// rewrote PBM/PGM/PPM parser after pbmplus ppmlibrary routinees
+// this adds methods pbm_getc and pbm_getint
+// fixed pbm_getint to work with backwards (/) instead of (\) escape characters on the
+// newlines.
+// added pbm_readpbminit after ppmplus library, this code corretly handles the magic number
+// that starts the file.
+// loadPPM: method changed to use pbm_readpbminit and magic numbers
+//
+// To Be done:  
+// change loadPFM to respond to magic numbers
+// implement natural (ascii) encoding
+
 #import "image.h"
 #include <stdio.h>
 
 
 @implementation PMReader
+
+- (char)pbm_getc:(FILE *)file
+{
+    register int ich;
+    register char ch;
+    
+    ich = getc( file );
+    if ( ich == EOF )
+        NSLog(@"EOF / read error" );
+    ch = (char) ich;
+    
+    if ( ch == '#' )
+	{
+        // capture comments here.  The origional coder seemed to think comments
+        // to be useful.  No files caught in the wild have comments, so this is
+        // disabled (not implemented) as the back channel is pretty cluttered as it is.
+        // the best way to implement this would be to create or find methods
+        // that appends a NSString from chars.  This gets complicated as international
+        // and unicode variations should be handled for completness.
+        do
+	    {
+            ich = getc( file );
+            if ( ich == EOF )
+                NSLog(@"EOF / read error" );
+            ch = (char) ich;
+	    }
+        while ( ch != '\n' && ch != '\r' );
+	}
+    
+    return ch;
+}
+
+- (int)pbm_getint:(FILE *)file
+{
+    register char ch;
+    register int i;
+    
+    // properly handle whitespace chars that may be insterted to make the
+    // data more readable. This is probably more useful with natural or ascii
+    // encoding varients that convert from cstv table formats where separators are
+    // commas, spaces and tabs. 
+    do
+	{
+        ch = [ self pbm_getc: file ];
+	}
+    while ( ch == ' ' || ch == ',' || ch == '\t' || ch == '\n' || ch == '\r' );
+    
+    if ( ch < '0' || ch > '9' )
+    {
+        
+        if (ch == '/') {
+            // some files have the wrong newline escape sequence, since these files were
+            // burned onto the CD we ignore such values 
+            ch = [ self pbm_getc: file ];
+        }
+ 
+        NSLog(@"Warning: junk in file where an integer should be %c ",ch );
+        
+        do
+        {
+            ch = [ self pbm_getc: file ];
+        }
+        while ( ch < '0' || ch > '9' );
+    }
+     
+    i = 0;
+    do
+	{
+        i = i * 10 + ch - '0';
+        ch = [ self pbm_getc: file ];
+    }
+    while ( ch >= '0' && ch <= '9' );
+    
+    return i;
+}
+- (int)pbm_readpbminit:(FILE *)file
+{ 
+    
+    int formatP;
+    //gray maxvalP = 0;
+   
+ 
+    // pbm_readmagicnumber( file )
+    int ich1, ich2;
+        
+    ich1 = getc( file );
+    if ( ich1 == EOF )
+        NSLog(@"EOF / read error reading magic number" );
+    ich2 = getc( file );
+    if ( ich2 == EOF )
+        NSLog(@"EOF / read error reading magic number" );
+    
+    formatP = ich1 * 256 + ich2;
+    
+    nx = [self pbm_getint: file ]; 
+    ny = [ self pbm_getint: file ];
+
+    channels = 1;
+    switch ( PPM_FORMAT_TYPE(formatP) )
+    {
+        case PPM_TYPE:
+            channels = 3;
+        case PGM_TYPE:
+            /* Read maxval. */
+            maxval = (gray)[self pbm_getint: file ];
+             break;
+
+        case PBM_TYPE:
+            maxval = 0;
+            break;
+           
+        default:
+            NSLog(@"bad magic number - not a pbm file" );
+            return 0;
+
+    }
+    
+    bps = 8;
+    if (maxval > 255)
+        bps = 16;
+    
+    NSLog(@"bps=%d",bps);
+    
+    if (maxval > PGM_MAXMAXVAL)
+    {
+        NSLog(@"Colorvalues of %d exceeds %d", cp,PGM_MAXMAXVAL);
+        return -1;
+    }
+
+    
+    return formatP;
+    
+}
+
+
 
 - (CGImageRef)loadPFM:(const char*)filename
 {
@@ -162,110 +313,28 @@
 - (CGImageRef)loadPPM:(const char*)filename
 {
     FILE   *inimage;        // input file
-    char   row[80];         // buffer    
     
     // resetting dimensions and counters
     nx = 0; ny = 0; channels = 1;
-    
+ 	cp = 0;
+   
     // open image, which exists and has the correct
     // format (previously checked in 'load')
     inimage = fopen( filename,"r");
     
-    // First entry is the filetype
-    fgets (row, 80, inimage);
+    magicNumber = [self pbm_readpbminit: inimage];
     
-    
-    // check if we have monochrome or not
-    if ( row[1] == '6' )
-        channels = 3;
-    
-    size_t clines = 20;
-    size_t counter = 0;
-    size_t pos = 0;
-    char comments[80*clines];
-    memset((void*) comments, 0, sizeof(char)*80*clines);
-    
-    
-    // Second Entry could be the size of the image an it could be a comment
-    fgets (row, 80, inimage);
-    while (row[0]=='#')
-    {
-        if (counter < clines)
-        {
-            printf("Reading comment %d to pointer %d\n  %s", (int) counter, (int) counter*80, row );
-            strncpy(&comments[pos], row, strlen(row));
-            pos += strlen(row);
-            counter +=1;
-        }
-    
-        fgets(row,80,inimage);
-
-    }
-    
-    printf("-----------------------\n%s\n-----------------------\n",comments);
-    
-    NSString* str = [[NSString alloc] initWithCString:comments encoding:CFStringGetSystemEncoding()];
-    
-    NSLog(@"We have: \"%@\"",str);
-    
-    
-	NSString* tmp = [NSString stringWithUTF8String: row];
-    NSArray *values = [tmp componentsSeparatedByString: @" "];
-	
-	cp = 0;
-    
-	// if only dimensions are in this line
-    if ([values count] == 2) {
-		  // Saving image dimensions
-		NSLog(@"We found %u parameters\n", (unsigned int) [values count]);
-		sscanf (row, "%d %d", &nx, &ny);
-		printf("Reading Image with %dx%d\n",nx, ny);
-		if (ny == 0)
-		{
-			printf("Trying second line for dimensions in PFM file\n");
-			fgets (row, 80, inimage);
-			sscanf (row, "%d", &ny);
-			printf("Reading Image with %dx%d\n",nx, ny);
-		}
-    
-		// get color depth
-		fgets (row, 80, inimage);
-    
-    
-		// colors
-		sscanf (row, "%d", &cp);
-    
-    
-		NSLog(@"Image has been read and has size %dx%dx%d\n",nx, ny, channels);
-	} else {
-		NSLog(@"We found %u parameters\n", (unsigned int)[values count]);
-		// Saving image dimensions
-		sscanf (row, "%d %d %d", &nx, &ny, &cp);
-		printf("Reading Image with %dx%d %d\n",nx, ny, cp);
-		if (ny == 0)
-		{
-			printf("Trying second line for dimensions in PFM file\n");
-			fgets (row, 80, inimage);
-			sscanf (row, "%d", &ny);
-			printf("Reading Image with %dx%d\n",nx, ny);
-		}
-		
-		NSLog(@"Image has been read and has size %dx%dx%d\n",nx, ny, channels);
-	}
-    
-    spp = channels;
-    bps = 8;
-    
-    if (cp > 255)
-        bps = 16;
-    
-    NSLog(@"bps=%d",bps);
-    
-    if (cp > 65535)
-    {
-        NSLog(@"Colorvalues of %d exceeds 65535", cp);
+    if (PPM_FORMAT_TYPE(magicNumber) == -1) {
         return NULL;
     }
+    
+   
+    NSLog(@"We found 0x%X magic number\n", (unsigned int)magicNumber);
+    
+	
+    NSLog(@"Reading Image with %dx%d %d\n",nx, ny, cp);
+	
+    spp = channels;
     
     NSString* csp = NSDeviceRGBColorSpace;
     
@@ -288,6 +357,8 @@
     }
     
     printf("Try to read the data\n");
+    
+    // currently we do not have the ascii formats implemented
 
     // reading image
     size_t check = fread( (void*) [image2 bitmapData], bps / 8, nx*ny*channels, inimage);
@@ -298,6 +369,8 @@
         return NULL;
     }
     
+    NSLog(@"Image has been read and has size %dx%dx%d\n",nx, ny, channels);
+   
     // close image
     fclose(inimage);
     
@@ -313,9 +386,39 @@
     FILE   *inimage;        // input file
     char   row[80];         // buffer
     
-    const char *filename = CFStringGetCStringPtr(filenameCF, CFStringGetSystemEncoding());
+    // const char *filename = CFStringGetCStringPtr(filenameCF, CFStringGetSystemEncoding());
+    char *fullPath;
+    char filename[512];;
     
-    NSLog(@"This is our new fancy ImageClass");
+    Boolean conversionResult;
+    CFStringEncoding encodingMethod;
+
+    
+    NSLog(@"This is our new fancy Picture Map Reader (PMReader) ImageClass");
+
+    // This is for ensuring safer operation. When CFStringGetCStringPtr() fails,
+    // it tries CFStringGetCString().
+     
+    encodingMethod = CFStringGetFastestEncoding(filenameCF);
+     
+    // 1st try for English system
+    fullPath = (char*)CFStringGetCStringPtr(filenameCF, encodingMethod);
+
+    // for safer operation.
+    if( fullPath == NULL )
+    {
+        CFIndex length = CFStringGetMaximumSizeOfFileSystemRepresentation(filenameCF);
+        fullPath = (char *)malloc( length + 1 );
+        conversionResult = CFStringGetFileSystemRepresentation(filenameCF, fullPath, length);
+        //conversionResult = CFStringGetCString(filenameCF, fullPath, length, kCFStringEncodingASCII );
+        
+        strcpy( filename, fullPath );
+        
+        free( fullPath );
+    }
+    else
+        strcpy( filename, fullPath );
+    
     
     // open image read-only
     inimage = fopen( filename,"r");
