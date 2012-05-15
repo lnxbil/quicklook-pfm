@@ -4,4 +4,4 @@ all:
 	@echo "Compilation starts in 5 seconds"
 	@echo "-----------------------------------------------------------"
 	@sleep 5
-	@xcodebuild -project Quicklook-PFM.xcodeproj -alltargets
+	@/Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild -project Quicklook-PFM.xcodeproj -alltargets
