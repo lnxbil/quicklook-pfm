@@ -20,6 +20,7 @@
  */
 
 // May 2012  Bugfixes by JulieSPorter (sheepdoll on github)
+// August 2013 Add support for P1 and P2 (ASCII) files (titouanc)
 
 // changed load: method to use a safe multi langage string encoding method.  This allows
 // for spaces in the path name to be correctly handled.
@@ -38,6 +39,39 @@
 #import "image.h"
 #include <stdio.h>
 
+static void readP2(FILE *input, NSBitmapImageRep *img, uint width, uint height, uint maxval)
+{
+    uint x=0, y=0, val;
+    NSColor *color;
+    while (! feof(input) && y<height){
+        if (fscanf(input, "%u", &val) != 1)
+            break;
+        color = [NSColor colorWithCalibratedWhite: ((double)val/maxval) alpha:1];
+        [img setColor:color atX:x y:y];
+        x++;
+        if (x == width){
+            y++;
+            x = 0;
+        }
+    }
+}
+
+static void readP1(FILE *input, NSBitmapImageRep *img, uint width, uint height)
+{
+    uint x=0, y=0, val;
+    NSColor *black = [NSColor colorWithCalibratedWhite:0 alpha:1];
+    NSColor *white = [NSColor colorWithCalibratedWhite:1 alpha:1];
+    while (! feof(input) && y<height){
+        if (fscanf(input, "%u", &val) != 1)
+            break;
+        [img setColor:((val) ? black : white) atX:x y:y];
+        x++;
+        if (x == width){
+            y++;
+            x = 0;
+        }
+    }
+}
 
 @implementation PMReader
 
@@ -174,8 +208,6 @@
     
 }
 
-
-
 - (CGImageRef)loadPFM:(const char*)filename
 {
     FILE   *inimage;        // input file
@@ -309,7 +341,6 @@
     return [image2 CGImage];
 }
 
-
 - (CGImageRef)loadPPM:(const char*)filename
 {
     FILE   *inimage;        // input file
@@ -328,11 +359,7 @@
         return NULL;
     }
     
-   
-    NSLog(@"We found 0x%X magic number\n", (unsigned int)magicNumber);
-    
-	
-    NSLog(@"Reading Image with %dx%d %d\n",nx, ny, cp);
+    NSLog(@"Reading 0x%X Image with %dx%d %d\n", (unsigned int)magicNumber, nx, ny, cp);
 	
     spp = channels;
     
@@ -356,27 +383,29 @@
         return NULL;
     }
     
-    printf("Try to read the data\n");
+    size_t check;
     
-    // currently we do not have the ascii formats implemented
+    switch (magicNumber){
+    case PGM_FORMAT: 
+            readP2(inimage, image2, nx, ny, maxval); 
+            break;
+    case PBM_FORMAT: 
+            readP1(inimage, image2, nx, ny); 
+            break;
+    default:
+        // reading image
+        check = fread( (void*) [image2 bitmapData], bps / 8, nx*ny*channels, inimage);
 
-    // reading image
-    size_t check = fread( (void*) [image2 bitmapData], bps / 8, nx*ny*channels, inimage);
-    
-    if (check != nx*ny*channels)
-    {
-        NSLog(@"Unfortunately, we read %ld instead of %d (%dx%dx%d) items", check, nx*ny*channels, nx, ny, channels);
-        return NULL;
+        if (check != nx*ny*channels)
+        {
+            NSLog(@"Unfortunately, we read %ld instead of %d (%dx%dx%d) items", check, nx*ny*channels, nx, ny, channels);
+            return NULL;
+        }
+
+        NSLog(@"Image has been read and has size %dx%dx%d\n",nx, ny, channels);
     }
     
-    NSLog(@"Image has been read and has size %dx%dx%d\n",nx, ny, channels);
-   
-    // close image
     fclose(inimage);
-    
-
-    NSLog(@"Image constructed and image pointer is %p\n", image2);
-    
     return [image2 CGImage];
 }
 
@@ -443,6 +472,7 @@
         return NULL;
     }
     
+    NSLog(@"Row is %s", row);
     switch (row[1]) {
         case 'f':
         case 'F':
@@ -451,6 +481,8 @@
             
         case '6':
         case '5':
+        case '2':
+        case '1':
             return [self loadPPM:filename];
             break;
             
