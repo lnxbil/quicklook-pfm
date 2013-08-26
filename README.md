@@ -4,6 +4,7 @@ This piece of code enables [Apple QuickLook](http://en.wikipedia.org/wiki/Quick_
 * PPM (3-channel 8-bit) files
 * PFM (1/3 channel 32-bit ) files
 * PGM (1-channel 8-bit) files
+* PBM (1-channel 1-bit) files
 
 # Download
 If you don't want to download the code, you can use the precompiled versions on the [Google-Code-Homepage](http://code.google.com/p/quicklook-pfm/downloads/list) or use the direct download of the current version below:
