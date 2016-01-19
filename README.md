@@ -7,9 +7,9 @@ This piece of code enables [Apple QuickLook](http://en.wikipedia.org/wiki/Quick_
 * PBM (1-channel 1-bit) files
 
 # Download
-If you don't want to download the code, you can use the precompiled versions on the [Google-Code-Homepage](http://code.google.com/p/quicklook-pfm/downloads/list) or use the direct download of the current version below:
+If you don't want to download the code, you can use the precompiled versions on the [GitHub-Releases-Homepage](https://github.com/lnxbil/quicklook-pfm/releases) or use the direct download of the current version below:
 
-* [Version 1.1](http://code.google.com/p/quicklook-pfm/downloads/detail?name=quicklook-pfm-1.1.zip&can=2&q=)
+* [Version 1.1](https://github.com/lnxbil/quicklook-pfm/releases/download/1.1/quicklook-pfm-1.1.zip)
 
 #Installation
 Download the newest version, unpack the zip-file and copy the Quicklook-PFM into the following directory
