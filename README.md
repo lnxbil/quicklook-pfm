@@ -13,5 +13,7 @@ If you don't want to download the code, you can use the precompiled versions on 
 
 # Installation
 Download the newest version, unpack the zip-file and copy the Quicklook-PFM into the following directory
+
     ~/Library/Quicklook
+    
 (maybe, you have to create this folder). Finder has to be restartet in order to be able to use this QuickLook plugin. This can be done by either killing Finder in the terminal (killall Finder) or logout/login.
